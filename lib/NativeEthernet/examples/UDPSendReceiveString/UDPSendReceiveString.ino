@@ -17,10 +17,10 @@
 #include <NativeEthernetUdp.h>
 
 // Enter a MAC address and IP address for your controller below.
+// If not present, you can use one that does not conflict with your network.
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+
 // The IP address will be dependent on your local network:
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
 IPAddress ip(192, 168, 1, 177);
 
 unsigned int localPort = 8888;      // local port to listen on
