@@ -3,63 +3,55 @@
 #include <Ticker.h>                   // https://github.com/sstaub/Ticker
 #include "Servo.h"
  
-// Servo 1 setup 
+///////////////
+// Servo Setup
+///////////////
 Servo servo1;           // create servo object to control a servo 
 int servo1_pin = 23;    // Servo 1 attaches to pin 23 
 int del1_out = 0;       // variable to store the servo position 
-float del1_dmd = 0.0;  // incoming demand from ROS2 network
+float del1_dmd = 0.0;   // incoming demand from ROS2 network
 int trim1 = 50;         // variable for trimming the servo to zero
 
+// Define Structs
+JoyStick myJoystick;                             
+outPacket myPacket;
 
-void parsePacket(AsyncUDPPacket packet);
-AsyncUDP udp;
-#define UDP_REQUEST_INTERVAL_MS     60000  //600000
-void sendRequest();
-Ticker sendUDPRequest(sendRequest, UDP_REQUEST_INTERVAL_MS, 0, MILLIS);
-void sendRequest()
-{
-  UDP_LOGDEBUG("Send broadcast");
-  udp.broadcast("Anyone here?");
+// Definitions
+AsyncUDP udp1; // A UDP instance to let us send and receive packets over UDP 
+AsyncUDP udp2; // A UDP instance to let us send and receive packets over UDP 
+
+IPAddress remoteIP = IPAddress(10, 250, 225, 92); 
+#define RECEIVE_PORT 1560
+#define SEND_PORT 1561
+
+const int PACKET_SIZE = 4;        // NTP timestamp is in the first 48 bytes of the message
+byte packetBuffer[PACKET_SIZE];   // buffer to hold incoming and outgoing packets
+
+
+///////////////////////
+// Send outgoing packet 
+void sendPacket(void) {
+  // createPacket();
+  myPacket.depth = del1_dmd;
+  memset(packetBuffer, 0, PACKET_SIZE);
+  memcpy(packetBuffer, &myPacket, PACKET_SIZE);
+  udp2.write(packetBuffer, PACKET_SIZE);
 }
 
 
-///////////////
-// Define Struc 
-///////////////
-struct __attribute__((packed)) JoyStick {
-  // The data sending from Ros2 node is a series of bytes that can be represented as:
-  uint32_t time;
-  float axis1;
-  float axis2;
-  uint32_t sync;
-};
-
-
-///////////////
-// Parse Packet 
-///////////////
+/////////////////////////
+// Parse Incoming Packets
 void parsePacket(AsyncUDPPacket packet)
 {
-  // Since the packet data is an array of uint8_t, copy the data into a variable of JoyStick_t type, so that you can access the data as a struct.
-  int packetSize = packet.length();
-  if (packetSize) {
-    Serial.printf("Received %d bytes\n", packetSize);
-    
-      JoyStick myJoystick;                      //create a struct
-      memcpy(&myJoystick, packet.data(), packetSize);  //copy packet array to the a struct
-      Serial.printf("%u %f %f %u\n", 
-                    myJoystick.time, 
-                    myJoystick.axis1, 
-                    myJoystick.axis2, 
-                    myJoystick.sync);           // access the data in the struct
-
+  if (packet.length()) {    
+    memcpy(&myJoystick, packet.data(), packet.length());  
     del1_dmd = myJoystick.axis1;
   }
 }
 
+
 /////////////
 // Void Setup 
-/////////////
 void setup() {
   Serial.begin(9600);
   servo1.attach(23);    // attaches the servo on pin
@@ -67,38 +59,31 @@ void setup() {
   Serial.print("Initialize Ethernet using DHCP => ");
   Ethernet.begin();
 
-  if (!Ethernet.waitForLocalIP(5000))
-  {
+  if (!Ethernet.waitForLocalIP(5000)) {
     Serial.println(F("Failed to configure Ethernet"));
     if (!Ethernet.linkStatus())
       Serial.println(F("Ethernet cable is not connected."));
     while (true)
       delay(1);
+  } else {
+    Serial.print(F("Connected! Teensy IP address:"));
+    Serial.println(Ethernet.localIP());
   }
-  else
-    Serial.print(F("Connected!"));
   delay(1000);
 
-
-  if (udp.listen(1560))
-  {
-    udp.onPacket([](AsyncUDPPacket packet)
-    {
-      parsePacket(packet);
-      packet.printf("Got %u bytes of data", packet.length());
+  if (udp1.listen(RECEIVE_PORT)) {
+    udp1.onPacket([](AsyncUDPPacket incomingPacket) {
+      parsePacket(incomingPacket);
     });
   }
-
-  sendRequest();
-  sendUDPRequest.start(); //start the ticker
+  udp2.connect(remoteIP, SEND_PORT);
 }
 
 
-
-
-
+/////////////
+// Void Loop
 void loop() {
-  sendUDPRequest.update();
+  sendPacket();
 
   // servo here!
   del1_out = map(del1_dmd, -1.57, 1.57, 1000, 2000);     // scale delta input to microseconds

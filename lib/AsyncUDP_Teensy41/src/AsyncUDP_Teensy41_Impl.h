@@ -255,7 +255,6 @@ bool AsyncUDP::listen(ip_addr_t *addr, const uint16_t& port)
   if (_pcb == NULL)
   {
     UDP_LOGDEBUG("listen: Error NULL pcb");
-
     return false;
   }
 
@@ -264,9 +263,7 @@ bool AsyncUDP::listen(ip_addr_t *addr, const uint16_t& port)
   if (err != ERR_OK)
   {
     close();
-
     UDP_LOGDEBUG1("listen: Can't bind UDP, error =", err);
-
     return false;
   }
 
@@ -400,7 +397,6 @@ size_t AsyncUDP::writeTo(const uint8_t *data, size_t len, ip_addr_t *addr, const
     if (err < ERR_OK)
     {
       UDP_LOGDEBUG1("writeTo: UDP send error =", err);
-
       return 0;
     }
 

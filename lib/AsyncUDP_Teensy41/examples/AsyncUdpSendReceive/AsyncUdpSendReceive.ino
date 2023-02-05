@@ -77,60 +77,60 @@ void sendNTPPacket()
   Udp.write(packetBuffer, sizeof(packetBuffer));
 }
 
-void parsePacket(AsyncUDPPacket packet)
-{
-  struct tm  ts;
-  char       buf[80];
+// void parsePacket(AsyncUDPPacket packet)
+// {
+//   struct tm  ts;
+//   char       buf[80];
 
-  memcpy(packetBuffer, packet.data(), sizeof(packetBuffer));
+//   memcpy(packetBuffer, packet.data(), sizeof(packetBuffer));
 
-  Serial.print("Received UDP Packet Type: ");
-  Serial.println(packet.isBroadcast() ? "Broadcast" : packet.isMulticast() ? "Multicast" : "Unicast");
-  Serial.print("From: ");
-  Serial.print(packet.remoteIP());
-  Serial.print(":");
-  Serial.print(packet.remotePort());
-  Serial.print(", To: ");
-  Serial.print(packet.localIP());
-  Serial.print(":");
-  Serial.print(packet.localPort());
-  Serial.print(", Length: ");
-  Serial.print(packet.length());
-  Serial.println();
+//   Serial.print("Received UDP Packet Type: ");
+//   Serial.println(packet.isBroadcast() ? "Broadcast" : packet.isMulticast() ? "Multicast" : "Unicast");
+//   Serial.print("From: ");
+//   Serial.print(packet.remoteIP());
+//   Serial.print(":");
+//   Serial.print(packet.remotePort());
+//   Serial.print(", To: ");
+//   Serial.print(packet.localIP());
+//   Serial.print(":");
+//   Serial.print(packet.localPort());
+//   Serial.print(", Length: ");
+//   Serial.print(packet.length());
+//   Serial.println();
 
-  unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-  unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+//   unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+//   unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
 
-  // combine the four bytes (two words) into a long integer
-  // this is NTP time (seconds since Jan 1 1900):
-  unsigned long secsSince1900 = highWord << 16 | lowWord;
+//   // combine the four bytes (two words) into a long integer
+//   // this is NTP time (seconds since Jan 1 1900):
+//   unsigned long secsSince1900 = highWord << 16 | lowWord;
 
-  Serial.print(F("Seconds since Jan 1 1900 = "));
-  Serial.println(secsSince1900);
+//   Serial.print(F("Seconds since Jan 1 1900 = "));
+//   Serial.println(secsSince1900);
 
-  // now convert NTP time into )everyday time:
-  Serial.print(F("Epoch/Unix time = "));
+//   // now convert NTP time into )everyday time:
+//   Serial.print(F("Epoch/Unix time = "));
 
-  // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-  const unsigned long seventyYears = 2208988800UL;
+//   // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+//   const unsigned long seventyYears = 2208988800UL;
 
-  // subtract seventy years:
-  unsigned long epoch = secsSince1900 - seventyYears;
-  time_t epoch_t = epoch;   //secsSince1900 - seventyYears;
+//   // subtract seventy years:
+//   unsigned long epoch = secsSince1900 - seventyYears;
+//   time_t epoch_t = epoch;   //secsSince1900 - seventyYears;
 
-  // print Unix time:
-  Serial.println(epoch);
+//   // print Unix time:
+//   Serial.println(epoch);
 
-  // print the hour, minute and second:
-  Serial.print(F("The UTC/GMT time is "));       // UTC is the time at Greenwich Meridian (GMT)
+//   // print the hour, minute and second:
+//   Serial.print(F("The UTC/GMT time is "));       // UTC is the time at Greenwich Meridian (GMT)
 
-  ts = *localtime(&epoch_t);
-  strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-  Serial.println(buf);
+//   ts = *localtime(&epoch_t);
+//   strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+//   Serial.println(buf);
 
-  // send a reply, to the IP address and port that sent us the packet we received
-  sendACKPacket();
-}
+//   // send a reply, to the IP address and port that sent us the packet we received
+//   sendACKPacket();
+// }
 
 void setup()
 {
@@ -206,7 +206,6 @@ void setup()
   }
 
   sendNTPPacket();
-
   sendUDPRequest.start(); //start the ticker
 }
 
