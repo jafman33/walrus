@@ -24,6 +24,10 @@ MS5837::MS5837() {
 	fluidDensity = 1029;
 }
 
+// MS5837::MS5837(float rho) {
+// 	fluidDensity = rho;
+// }
+
 bool MS5837::begin(TwoWire &wirePort) {
 	return (init(wirePort));
 }

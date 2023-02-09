@@ -4,8 +4,15 @@
 #include "Arduino.h"
 #include "../config.h"
 #include "AsyncUDP_Teensy41.hpp"    
-#include "QNEthernet.h"       
+#include "QNEthernet.h"   
+
 #include "Servo.h"
+
+#include "SPI.h"
+#include "YOST_TTS_LX.h"
+
+#include <Wire.h>
+#include "MS5837.h"
 
 using namespace qindesign::network;
 
@@ -27,7 +34,10 @@ namespace Cyberwing
 		};
 
 		struct OutPacket {
-			float depth;
+			float ax, ay, az;
+			float wx, wy, wz;
+			float q1, q2, q3, q4;
+			float depth, temperature;
 		};
 
 	public:
@@ -45,10 +55,13 @@ namespace Cyberwing
 		Servo servo1_;
 		Servo servo2_;
 
+		// YOST_TTS_LX imu_;
+		MS5837 depth_;
+
 		InPacket inPacket_;
 		OutPacket outPacket_;             
 
-		float state_[7];
+		float state_[12];
 		float input_[2];
 
 		byte packetBuffer_[PACKET_SIZE_OUT];
@@ -56,6 +69,7 @@ namespace Cyberwing
 		void parsePacket(AsyncUDPPacket packet);
 		void publishState(void);
 		void forwardInputs(void);
+		void updateState(void);
 
 	};
 }

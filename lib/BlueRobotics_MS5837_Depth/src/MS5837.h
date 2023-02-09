@@ -50,7 +50,12 @@ public:
 	static const uint8_t MS5837_02BA;
 	static const uint8_t MS5837_UNRECOGNISED;
 
+	// constuctor
 	MS5837();
+	
+	MS5837(float rho) {
+		fluidDensity = rho;
+	}
 
 	bool init(TwoWire &wirePort = Wire);
 	bool begin(TwoWire &wirePort = Wire); // Calls init()
@@ -86,6 +91,8 @@ public:
 	/** Altitude returned in meters (valid for operation in air only).
 	 */
 	float altitude();
+
+	
 
 private:
 
