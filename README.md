@@ -15,3 +15,5 @@ managing reliable bidirectional UDP based communication with the towing vehicle.
 The source code has been developed for, and tested, on a Teensy 4.1 micro-controller. 
 The objectives of the source code is to support bi-directional communication for an 
 actuated tethered vehicle with onboard sensing and dynamic capabilities.
+
+![Picture1](https://user-images.githubusercontent.com/83678386/228845231-ecb7e2a6-dcdd-4726-a611-a5c74db20bbe.png)
