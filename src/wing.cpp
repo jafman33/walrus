@@ -29,7 +29,6 @@ namespace Cyberwing
         // Initialize Serial Port
         Serial.begin(9600);
 
-        
         ///////////////////////////////////
         // Initialize Ethernet (using DHCP)
         Ethernet.begin();
@@ -37,11 +36,10 @@ namespace Cyberwing
             status_ = STATUS::FAILURE;
             Serial.println(F("Failed to configure Ethernet"));
             if (!Ethernet.linkStatus())
-            Serial.println(F("Ethernet cable is not connected."));
+                Serial.println(F("Ethernet cable is not connected."));
             while (true)
-            delay(1);
+                delay(1);
         } else {
-            status_ = STATUS::RUNNING;
             Serial.print(F("Connected! Teensy IP address:"));
             Serial.println(Ethernet.localIP());
             delay(1000);
@@ -53,17 +51,39 @@ namespace Cyberwing
                 });
             }
             // Connect to IP and Port for sending packets
-            udp2_.connect(IPAddress(10, 250, 225, 92), SEND_PORT);
+            udp2_.connect(IPAddress(IP1, IP2, IP3, IP4), SEND_PORT);
+            status_ = STATUS::RUNNING;
         }
 
         ///////////////////
-        // Initialize Servo
+        // Initialize Servos
         servo1_.attach(SERVO1_PIN);    // attaches the servo on pin
+        servo2_.attach(SERVO2_PIN);    // attaches the servo on pin
 
         ////////////////////
         // Init depth sensor
         Wire.begin();
-        depth_.init();
+        // Wire.setSCL(DEPTH_SCL);
+        // Wire.setSDA(DEPTH_SDA);
+
+        if (!depth_.init()) {
+            Serial.println("Init failed!");
+            Serial.println("Are SDA/SCL connected correctly?");
+            Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
+            Serial.println("\n\n\n");
+            status_ = STATUS::FAILURE;
+            delay(1000);
+        } else {
+            depth_.setFluidDensity(FLUID_DENSITY);
+            depth_.setModel(MS5837::MS5837_30BA);
+            Serial.println("Depth Sensor Detected!");
+            Serial.print(F("Fluid density set to: "));
+            Serial.println(FLUID_DENSITY);
+            status_ = STATUS::RUNNING;
+        }
+
+        
+
 
         ////////////////////
         // Initialize IMU
@@ -85,8 +105,25 @@ namespace Cyberwing
 
     //Update internal state
 	void Wing::update(void)
-	{
-        // Serial.println(state_[0]);
+	{       
+
+        // depth_.read();
+
+        // Serial.print("Pressure: ");
+        // Serial.print(depth_.pressure());
+        // Serial.println(" mbar");
+
+        // Serial.print("Temperature: ");
+        // Serial.print(depth_.temperature());
+        // Serial.println(" deg C");
+
+        // Serial.print("Depth: ");
+        // Serial.print(depth_.depth());
+        // Serial.println(" m");
+
+        // Serial.print("Altitude: ");
+        // Serial.print(depth_.altitude());
+        // Serial.println(" m above mean sea level");
 
         switch(status_)
 		{
@@ -99,48 +136,16 @@ namespace Cyberwing
                 ////////////////
                 // // Update IMU
 
-				// while(true)
-				// {
-				// 	//Check for user commands
-				// 	if(Serial.available())
-				// 	{
-				// 		char cmd = (char)Serial.read();
-				// 		switch(cmd)
-				// 		{
-				// 			case 't':
-				// 			{
-				// 				imu_.tareCustom();
-				// 				Serial.println("Taring IMU");
-				// 				break;
-				// 			}
-				// 			default :
-				// 			{
-				// 				Serial.println("Unkown command");
-				// 				break;
-				// 			}
-				// 		}
-				// 	}
-				// 	//Updating main IMU
-				// 	imu_.update();
-				// 	if(imu_.status_ != IMUAbstract::STATUS::RUNNING)
-				// 	{
-				// 		Serial.println("State Observer - update - IMU stopped running");
-				// 		// errorMessage_ = 3;
-				// 		status_ = STATUS::FAILURE;
-				// 		return;
-				// 	}
-				// }
+				
 
 
                 // ///////////////////////////////
                 // receive input packet and update 
-                // ///////////////////////////////
                 // receive(); - done through asynchonous function on init()
                 forwardInputs();
 
                 // ///////////////////////////////////
                 // Send vehicle state to host computer
-                // ///////////////////////////////////
                 updateState();
                 publishState();
 
@@ -149,8 +154,11 @@ namespace Cyberwing
 
             case STATUS::FAILURE:
 			{
-                servo1_.writeMicroseconds(1500);
-                servo2_.writeMicroseconds(1500);  
+                // Set Servos to 0 deg
+                int del1_ms = map(0, -1.57, 1.57, 1000, 2000);
+                int del2_ms = map(0, -1.57, 1.57, 1000, 2000);
+                servo1_.writeMicroseconds(del1_ms);
+                servo2_.writeMicroseconds(del2_ms);
 
 				break;
 			}
@@ -189,7 +197,6 @@ namespace Cyberwing
         outPacket_.depth = state_[10];
         outPacket_.temperature = state_[11];
 
-        // memset(packetBuffer_, 0, sizeof(packetBuffer_));
         memcpy(packetBuffer_, &outPacket_, sizeof(packetBuffer_));
         udp2_.write(packetBuffer_, sizeof(packetBuffer_));
     }
@@ -203,19 +210,7 @@ namespace Cyberwing
 
     void Wing::updateState(void)
 	{
-		// Get IMU and depth data
-        // float ax = imu_.rawData_.acc[0];
-        // float ay = imu_.rawData_.acc[1];
-        // float az = imu_.rawData_.acc[2];
-        // float wx = imu_.fusionedData_.rates[0];
-        // float wy = imu_.fusionedData_.rates[1];
-        // float wz = imu_.fusionedData_.rates[2];
-        // float q1 = imu_.fusionedData_.quat[0];
-        // float q2 = imu_.fusionedData_.quat[1];
-        // float q3 = imu_.fusionedData_.quat[2];
-        // float q4 = imu_.fusionedData_.quat[3];
-        // float depth = depth_.depth();
-        // float temperature = depth_.temperature();
+
         float ax = 0.1;
         float ay = 0.2;
         float az = 0.3;
@@ -226,8 +221,12 @@ namespace Cyberwing
         float q2 = 0.8;
         float q3 = 0.9;
         float q4 = 0.11;
-        float depth = 2.0;
-        float temperature = 88.0;
+
+        Serial.print("Depth: ");
+        Serial.print(depth_.depth());
+        Serial.println(" m");
+        float depth = depth_.depth();
+        float temperature = depth_.temperature();
                 
         float stateNew[12];
         stateNew[0] = ax;
