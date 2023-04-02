@@ -202,8 +202,8 @@ namespace Cyberwing
     }
 
     void Wing::forwardInputs(void) {
-        int del1_ms = map(input_[0], -1.57, 1.57, 1000, 2000);
-        int del2_ms = map(input_[1], -1.57, 1.57, 1000, 2000);
+        int del1_ms = map(input_[0]*1.5, -1.57, 1.57, 1000, 2000);
+        int del2_ms = map(input_[1]*1.5, -1.57, 1.57, 1000, 2000);
         servo1_.writeMicroseconds(del1_ms);
         servo2_.writeMicroseconds(del2_ms);
     }
