@@ -1,4 +1,5 @@
 #include "wing/wing.h"
+#include "myAHRS_plus.h"
 
 
 namespace Cyberwing
@@ -27,7 +28,7 @@ namespace Cyberwing
     void Wing::init(void) {
         /////////////////////////
         // Initialize Serial Port
-        Serial.begin(9600);
+        Serial.begin(115200);
 
         ///////////////////////////////////
         // Initialize Ethernet (using DHCP)
@@ -82,11 +83,11 @@ namespace Cyberwing
             status_ = STATUS::RUNNING;
         }
 
-        
-
-
+    
         ////////////////////
         // Initialize IMU
+        Wire1.begin();
+
         
 		// imu_.initSPI();
         // //Initialize IMU
@@ -107,24 +108,6 @@ namespace Cyberwing
 	void Wing::update(void)
 	{       
 
-        // depth_.read();
-
-        // Serial.print("Pressure: ");
-        // Serial.print(depth_.pressure());
-        // Serial.println(" mbar");
-
-        // Serial.print("Temperature: ");
-        // Serial.print(depth_.temperature());
-        // Serial.println(" deg C");
-
-        // Serial.print("Depth: ");
-        // Serial.print(depth_.depth());
-        // Serial.println(" m");
-
-        // Serial.print("Altitude: ");
-        // Serial.print(depth_.altitude());
-        // Serial.println(" m above mean sea level");
-
         switch(status_)
 		{
 			case STATUS::RUNNING: 
@@ -135,16 +118,18 @@ namespace Cyberwing
 
                 ////////////////
                 // // Update IMU
+                // read_raw_data();
+                // read_compensated_data();
+                // read_euler();
+                // read_quat();
 
-				
 
-
-                // ///////////////////////////////
+                /////////////////////////////////
                 // receive input packet and update 
                 // receive(); - done through asynchonous function on init()
                 forwardInputs();
 
-                // ///////////////////////////////////
+                /////////////////////////////////////
                 // Send vehicle state to host computer
                 updateState();
                 publishState();
@@ -210,35 +195,59 @@ namespace Cyberwing
 
     void Wing::updateState(void)
 	{
+        // read compensated state
+        uint8_t buf_comp_data[18];
+        read(I2C_SLAVE_REG_C_ACC_X_LOW, buf_comp_data, 18);
+        int16_t acc_c_x = (buf_comp_data[1]<<8) | buf_comp_data[0];
+        int16_t acc_c_y = (buf_comp_data[3]<<8) | buf_comp_data[2];
+        int16_t acc_c_z = (buf_comp_data[5]<<8) | buf_comp_data[4];
+        int16_t gyro_c_x = (buf_comp_data[7]<<8) | buf_comp_data[6];
+        int16_t gyro_c_y = (buf_comp_data[9]<<8) | buf_comp_data[8];
+        int16_t gyro_c_z = (buf_comp_data[11]<<8) | buf_comp_data[10];
+        float comp_acc_x = (float)acc_c_x * 16.0 / 32767;
+        float comp_acc_y = (float)acc_c_y * 16.0 / 32767;
+        float comp_acc_z = (float)acc_c_z * 16.0 / 32767;
+        float comp_gyro_x = (float)gyro_c_x * 2000 / 32767;
+        float comp_gyro_y = (float)gyro_c_y * 2000 / 32767;
+        float comp_gyro_z = (float)gyro_c_z * 2000 / 32767;
 
-        float ax = 0.1;
-        float ay = 0.2;
-        float az = 0.3;
-        float wx = 0.4;
-        float wy = 0.5;
-        float wz = 0.6;
-        float q1 = 0.7;
-        float q2 = 0.8;
-        float q3 = 0.9;
-        float q4 = 0.11;
+        // read quaternion
+        uint8_t buf_quat[8];
+        read(I2C_SLAVE_REG_QUATERNIAN_X_LOW, buf_quat, 8);
+        int16_t quat_x = (buf_quat[1]<<8) | buf_quat[0];
+        int16_t quat_y = (buf_quat[3]<<8) | buf_quat[2];
+        int16_t quat_z = (buf_quat[5]<<8) | buf_quat[4];
+        int16_t quat_w = (buf_quat[7]<<8) | buf_quat[6];
+        float quaternion_x = (float)quat_x / 32767;
+        float quaternion_y = (float)quat_y / 32767;
+        float quaternion_z = (float)quat_z / 32767;
+        float quaternion_w = (float)quat_w / 32767;
 
-        Serial.print("Depth: ");
-        Serial.print(depth_.depth());
-        Serial.println(" m");
+
+        float ax = comp_acc_x;
+        float ay = comp_acc_y;
+        float az = comp_acc_z;
+        float wx = comp_gyro_x;
+        float wy = comp_gyro_y;
+        float wz = comp_gyro_z;
+        float q1 = quaternion_x;
+        float q2 = quaternion_y;
+        float q3 = quaternion_z;
+        float q4 = quaternion_w;
         float depth = depth_.depth();
         float temperature = depth_.temperature();
                 
         float stateNew[12];
-        stateNew[0] = ax;
-        stateNew[1] = ay;
-        stateNew[2] = az;
-        stateNew[3] = wx;
-        stateNew[4] = wy;
-        stateNew[5] = wz;
-        stateNew[6] = q1;
-        stateNew[7] = q2;
-        stateNew[8] = q3;
-        stateNew[9] = q4;
+        stateNew[0] = comp_acc_x;
+        stateNew[1] = comp_acc_y;
+        stateNew[2] = comp_acc_z;
+        stateNew[3] = comp_gyro_x;
+        stateNew[4] = comp_gyro_y;
+        stateNew[5] = comp_gyro_z;
+        stateNew[6] = quaternion_x;
+        stateNew[7] = quaternion_y;
+        stateNew[8] = quaternion_z;
+        stateNew[9] = quaternion_w;
         stateNew[10] = depth;
         stateNew[11] = temperature;
 

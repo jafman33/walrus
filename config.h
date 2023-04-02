@@ -51,4 +51,10 @@ union num16_t
 #define DEPTH_SCL 19 // green
 /////////////////////////////////////////
 
+/////////////MY_AHRS_PLUS_IMU////////////
+#define MYAHRS_I2C_ADDRESS           0x20
+#define MYMOTION_WHO_AM_I_VALUE      0xB1
+/////////////////////////////////////////
+
+
 #endif
