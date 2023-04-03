@@ -39,6 +39,7 @@ namespace Cyberwing
 			float wx, wy, wz;
 			float q1, q2, q3, q4;
 			float depth, temperature;
+			float leak;
 		};
 
 	public:
@@ -61,9 +62,10 @@ namespace Cyberwing
 		MS5837 depth_;
 
 		InPacket inPacket_;
-		OutPacket outPacket_;             
+		OutPacket outPacket_;
 
-		float state_[12];
+		float leak_= 0;
+		float state_[13];
 		float input_[2];
 
 		byte packetBuffer_[PACKET_SIZE_OUT];

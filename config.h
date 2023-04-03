@@ -30,7 +30,7 @@ union num16_t
 #define USING_DHCP true
 #define RECEIVE_PORT 1560
 #define SEND_PORT 1561
-#define PACKET_SIZE_OUT 48
+#define PACKET_SIZE_OUT 52//48
 #define IP1 192
 #define IP2 168
 #define IP3 1
@@ -54,6 +54,10 @@ union num16_t
 /////////////MY_AHRS_PLUS_IMU////////////
 #define MYAHRS_I2C_ADDRESS           0x20
 #define MYMOTION_WHO_AM_I_VALUE      0xB1
+/////////////////////////////////////////
+
+//////////////////LEAK/////////////////
+#define LEAK_PIN 14
 /////////////////////////////////////////
 
 

@@ -100,6 +100,10 @@ namespace Cyberwing
 		// 	return;
 		// }
 
+        ///////////////////////
+        // Leak Sensor
+        pinMode(LEAK_PIN, INPUT);
+
         //ready
 		return;
 	}
@@ -112,17 +116,21 @@ namespace Cyberwing
 		{
 			case STATUS::RUNNING: 
             {
+
+                //////////////////////
+                // update leak sensor
+                leak_ = digitalRead(LEAK_PIN);
+                // if (leak_ == 1) {
+                //     Serial.println("Leak Detected!");
+                // } 
+            
                 //////////////////////
                 // update depth sensor
                 depth_.read();
 
                 ////////////////
                 // // Update IMU
-                // read_raw_data();
-                // read_compensated_data();
-                // read_euler();
-                // read_quat();
-
+                // Done in update functdion
 
                 /////////////////////////////////
                 // receive input packet and update 
@@ -181,6 +189,7 @@ namespace Cyberwing
         outPacket_.q4 = state_[9];
         outPacket_.depth = state_[10];
         outPacket_.temperature = state_[11];
+        outPacket_.leak = state_[12];
 
         memcpy(packetBuffer_, &outPacket_, sizeof(packetBuffer_));
         udp2_.write(packetBuffer_, sizeof(packetBuffer_));
@@ -195,7 +204,7 @@ namespace Cyberwing
 
     void Wing::updateState(void)
 	{
-        // read compensated state
+        // read state
         uint8_t buf_comp_data[18];
         read(I2C_SLAVE_REG_C_ACC_X_LOW, buf_comp_data, 18);
         int16_t acc_c_x = (buf_comp_data[1]<<8) | buf_comp_data[0];
@@ -204,6 +213,7 @@ namespace Cyberwing
         int16_t gyro_c_x = (buf_comp_data[7]<<8) | buf_comp_data[6];
         int16_t gyro_c_y = (buf_comp_data[9]<<8) | buf_comp_data[8];
         int16_t gyro_c_z = (buf_comp_data[11]<<8) | buf_comp_data[10];
+        // compensate
         float comp_acc_x = (float)acc_c_x * 16.0 / 32767;
         float comp_acc_y = (float)acc_c_y * 16.0 / 32767;
         float comp_acc_z = (float)acc_c_z * 16.0 / 32767;
@@ -218,26 +228,14 @@ namespace Cyberwing
         int16_t quat_y = (buf_quat[3]<<8) | buf_quat[2];
         int16_t quat_z = (buf_quat[5]<<8) | buf_quat[4];
         int16_t quat_w = (buf_quat[7]<<8) | buf_quat[6];
+        // compensate
         float quaternion_x = (float)quat_x / 32767;
         float quaternion_y = (float)quat_y / 32767;
         float quaternion_z = (float)quat_z / 32767;
         float quaternion_w = (float)quat_w / 32767;
 
-
-        float ax = comp_acc_x;
-        float ay = comp_acc_y;
-        float az = comp_acc_z;
-        float wx = comp_gyro_x;
-        float wy = comp_gyro_y;
-        float wz = comp_gyro_z;
-        float q1 = quaternion_x;
-        float q2 = quaternion_y;
-        float q3 = quaternion_z;
-        float q4 = quaternion_w;
-        float depth = depth_.depth();
-        float temperature = depth_.temperature();
-                
-        float stateNew[12];
+        // New State                
+        float stateNew[13];
         stateNew[0] = comp_acc_x;
         stateNew[1] = comp_acc_y;
         stateNew[2] = comp_acc_z;
@@ -248,8 +246,9 @@ namespace Cyberwing
         stateNew[7] = quaternion_y;
         stateNew[8] = quaternion_z;
         stateNew[9] = quaternion_w;
-        stateNew[10] = depth;
-        stateNew[11] = temperature;
+        stateNew[10] = depth_.depth();;
+        stateNew[11] = depth_.temperature();
+        stateNew[12] = leak_;
 
         memcpy(state_,stateNew,sizeof(state_));	
 	}
