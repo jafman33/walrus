@@ -34,7 +34,7 @@ union num16_t
 #define IP1 192
 #define IP2 168
 #define IP3 1
-#define IP4 130
+#define IP4 162
 /////////////////////////////////////////
 
 //////////////YOST_TTS_LX////////////////
