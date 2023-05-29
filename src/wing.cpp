@@ -11,6 +11,9 @@ namespace Cyberwing
         udp2_(),
         servo1_(),
         servo2_(),
+        servo3_(),
+        servo4_(),
+        servo5_(),
         // imu_(YOST_TTS_LX_MODE,
 	    //  SPI,
 	    //  YOST_TTS_LX_PIN_SS,
@@ -58,8 +61,11 @@ namespace Cyberwing
 
         ///////////////////
         // Initialize Servos
-        servo1_.attach(SERVO1_PIN);    // attaches the servo on pin
-        servo2_.attach(SERVO2_PIN);    // attaches the servo on pin
+        servo1_.attach(SERVO1_PWM_PIN);    // attaches the servo on pin
+        servo2_.attach(SERVO2_PWM_PIN);    // attaches the servo on pin
+        servo3_.attach(SERVO3_PWM_PIN);    // attaches the servo on pin
+        servo4_.attach(SERVO4_PWM_PIN);    // attaches the servo on pin
+        servo5_.attach(SERVO5_PWM_PIN);    // attaches the servo on pin
 
         ////////////////////
         // Init depth sensor
@@ -117,28 +123,21 @@ namespace Cyberwing
 			case STATUS::RUNNING: 
             {
 
-                //////////////////////
                 // update leak sensor
                 leak_ = digitalRead(LEAK_PIN);
-                // if (leak_ == 1) {
-                //     Serial.println("Leak Detected!");
-                // } 
+                // if (leak_ == 1) Serial.println("Leak Detected!");
             
-                //////////////////////
                 // update depth sensor
                 depth_.read();
 
-                ////////////////
-                // // Update IMU
-                // Done in update functdion
+                // Update IMU
+                // - Done in update functdion
 
-                /////////////////////////////////
                 // receive input packet and update 
                 // receive(); - done through asynchonous function on init()
                 forwardInputs();
 
-                /////////////////////////////////////
-                // Send vehicle state to host computer
+                // - Send vehicle state to host computer
                 updateState();
                 publishState();
 
@@ -147,11 +146,18 @@ namespace Cyberwing
 
             case STATUS::FAILURE:
 			{
-                // Set Servos to 0 deg
+                // Set Servos to 0 deg (must be tuned...)
                 int del1_ms = map(0, -1.57, 1.57, 1000, 2000);
                 int del2_ms = map(0, -1.57, 1.57, 1000, 2000);
+                int del3_ms = map(0, -1.57, 1.57, 1000, 2000);
+                int del4_ms = map(0, -1.57, 1.57, 1000, 2000);
+                int del5_ms = map(0, -1.57, 1.57, 1000, 2000);
+
                 servo1_.writeMicroseconds(del1_ms);
                 servo2_.writeMicroseconds(del2_ms);
+                servo3_.writeMicroseconds(del3_ms);
+                servo4_.writeMicroseconds(del4_ms);
+                servo5_.writeMicroseconds(del5_ms);
 
 				break;
 			}
@@ -171,36 +177,31 @@ namespace Cyberwing
             memcpy(&inPacket_, packet.data(), packet.length());  
             input_[0] = inPacket_.axis1;
             input_[1] = inPacket_.axis2;
+            input_[2] = inPacket_.axis3;
+            input_[3] = inPacket_.axis4;
+            input_[4] = inPacket_.axis5;
         }
     }
 
-    // prototype fn.
-    void Wing::publishState(void) {
-
-        outPacket_.ax = state_[0];
-        outPacket_.ay = state_[1];
-        outPacket_.az = state_[2];
-        outPacket_.wx = state_[3];
-        outPacket_.wy = state_[4];
-        outPacket_.wz = state_[5];
-        outPacket_.q1 = state_[6];
-        outPacket_.q2 = state_[7];
-        outPacket_.q3 = state_[8];
-        outPacket_.q4 = state_[9];
-        outPacket_.depth = state_[10];
-        outPacket_.temperature = state_[11];
-        outPacket_.leak = state_[12];
-
-        memcpy(packetBuffer_, &outPacket_, sizeof(packetBuffer_));
-        udp2_.write(packetBuffer_, sizeof(packetBuffer_));
-    }
 
     void Wing::forwardInputs(void) {
-        int del1_ms = map(input_[0]*1.5, -1.57, 1.57, 1000, 2000);
-        int del2_ms = map(input_[1]*1.5, -1.57, 1.57, 1000, 2000);
+
+        // TODO> THESE GUYS MUST BE TUNNED!
+        int del1_ms = map(input_[0], -1.57, 1.57, 1000, 2000);
+        int del2_ms = map(input_[1], -1.57, 1.57, 1000, 2000);
+        int del3_ms = map(input_[2], -1.57, 1.57, 1000, 2000);
+        int del4_ms = map(input_[3], -1.57, 1.57, 1000, 2000);
+        int del5_ms = map(input_[4], -1.57, 1.57, 1000, 2000);
+        
+        // Write to the servos
         servo1_.writeMicroseconds(del1_ms);
         servo2_.writeMicroseconds(del2_ms);
+        servo3_.writeMicroseconds(del3_ms);
+        servo4_.writeMicroseconds(del4_ms);
+        servo5_.writeMicroseconds(del5_ms);
+
     }
+
 
     void Wing::updateState(void)
 	{
@@ -234,8 +235,23 @@ namespace Cyberwing
         float quaternion_z = (float)quat_z / 32767;
         float quaternion_w = (float)quat_w / 32767;
 
+
+        // update servo feedback readings,
+        int d1 = analogRead(SERVO1_ANALOG_PIN);
+        int d2 = analogRead(SERVO2_ANALOG_PIN);
+        int d3 = analogRead(SERVO3_ANALOG_PIN);
+        int d4 = analogRead(SERVO4_ANALOG_PIN);
+        int d5 = analogRead(SERVO5_ANALOG_PIN);
+        // then map the analog input to a radian value.
+        // Todo: MAPPING MUST BE DONE. each servo has different potentiometer.
+        servoFeedback_[0] = map(d1, 0, 940, -1.57, 1.57);
+        servoFeedback_[0] = map(d2, 0, 940, -1.57, 1.57);
+        servoFeedback_[0] = map(d3, 0, 940, -1.57, 1.57);
+        servoFeedback_[0] = map(d4, 0, 940, -1.57, 1.57);
+        servoFeedback_[0] = map(d5, 0, 940, -1.57, 1.57);
+
         // New State                
-        float stateNew[13];
+        float stateNew[18];
         stateNew[0] = comp_acc_x;
         stateNew[1] = comp_acc_y;
         stateNew[2] = comp_acc_z;
@@ -249,8 +265,40 @@ namespace Cyberwing
         stateNew[10] = depth_.depth();;
         stateNew[11] = depth_.temperature();
         stateNew[12] = leak_;
+        stateNew[13] = servoFeedback_[0];
+        stateNew[14] = servoFeedback_[1];
+        stateNew[15] = servoFeedback_[2];
+        stateNew[16] = servoFeedback_[3];
+        stateNew[17] = servoFeedback_[4];
 
         memcpy(state_,stateNew,sizeof(state_));	
 	}
+
+
+
+    void Wing::publishState(void) {
+
+        outPacket_.ax = state_[0];
+        outPacket_.ay = state_[1];
+        outPacket_.az = state_[2];
+        outPacket_.wx = state_[3];
+        outPacket_.wy = state_[4];
+        outPacket_.wz = state_[5];
+        outPacket_.q1 = state_[6];
+        outPacket_.q2 = state_[7];
+        outPacket_.q3 = state_[8];
+        outPacket_.q4 = state_[9];
+        outPacket_.depth = state_[10];
+        outPacket_.temperature = state_[11];
+        outPacket_.leak = state_[12];
+        outPacket_.d1 = state_[13];
+        outPacket_.d2 = state_[14];
+        outPacket_.d3 = state_[15];
+        outPacket_.d4 = state_[16];
+        outPacket_.d5 = state_[17];
+
+        memcpy(packetBuffer_, &outPacket_, sizeof(packetBuffer_));
+        udp2_.write(packetBuffer_, sizeof(packetBuffer_));
+    }
 
 }

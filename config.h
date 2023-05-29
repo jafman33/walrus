@@ -19,8 +19,17 @@ union num16_t
 };
 
 //////////////////SERVO//////////////////
-#define SERVO1_PIN 23
-#define SERVO2_PIN 22
+#define SERVO1_PWM_PIN 2
+#define SERVO2_PWM_PIN 3
+#define SERVO3_PWM_PIN 4
+#define SERVO4_PWM_PIN 5
+#define SERVO5_PWM_PIN 6
+
+#define SERVO1_ANALOG_PIN A10
+#define SERVO2_ANALOG_PIN A11
+#define SERVO3_ANALOG_PIN A12
+#define SERVO4_ANALOG_PIN A13
+#define SERVO5_ANALOG_PIN A17
 /////////////////////////////////////////
 
 /////////////////ETHERNET////////////////
@@ -30,7 +39,7 @@ union num16_t
 #define USING_DHCP true
 #define RECEIVE_PORT 1560
 #define SEND_PORT 1561
-#define PACKET_SIZE_OUT 52//48
+#define PACKET_SIZE_OUT 72
 #define IP1 192
 #define IP2 168
 #define IP3 1

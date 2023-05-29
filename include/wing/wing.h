@@ -31,6 +31,9 @@ namespace Cyberwing
 			uint32_t time;
 			float axis1;
 			float axis2;
+			float axis3;
+			float axis4;
+			float axis5;
 			uint32_t sync;
 		};
 
@@ -40,6 +43,7 @@ namespace Cyberwing
 			float q1, q2, q3, q4;
 			float depth, temperature;
 			float leak;
+			float d1, d2, d3, d4, d5;
 		};
 
 	public:
@@ -56,6 +60,9 @@ namespace Cyberwing
 
 		Servo servo1_;
 		Servo servo2_;
+		Servo servo3_;
+		Servo servo4_;
+		Servo servo5_;
 
 		// YOST_TTS_LX imu_;
 
@@ -65,8 +72,9 @@ namespace Cyberwing
 		OutPacket outPacket_;
 
 		float leak_= 0;
-		float state_[13];
-		float input_[2];
+		float state_[18];
+		float input_[5];
+		float servoFeedback_[5];
 
 		byte packetBuffer_[PACKET_SIZE_OUT];
 		
