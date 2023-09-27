@@ -40,10 +40,10 @@ union num16_t
 #define RECEIVE_PORT 1560
 #define SEND_PORT 1561
 #define PACKET_SIZE_OUT 72
-#define IP1 192
-#define IP2 168
-#define IP3 1
-#define IP4 162
+#define IP1 10
+#define IP2 250
+#define IP3 225
+#define IP4 111
 /////////////////////////////////////////
 
 //////////////YOST_TTS_LX////////////////
