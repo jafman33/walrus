@@ -82,7 +82,8 @@ namespace Cyberwing
             delay(1000);
         } else {
             depth_.setFluidDensity(FLUID_DENSITY);
-            depth_.setModel(MS5837::MS5837_30BA);
+            // depth_.setModel(MS5837::MS5837_30BA);
+            depth_.setModel(MS5837::MS5837_02BA);
             Serial.println("Depth Sensor Detected!");
             Serial.print(F("Fluid density set to: "));
             Serial.println(FLUID_DENSITY);
