@@ -243,13 +243,20 @@ namespace Cyberwing
         int d3 = analogRead(SERVO3_ANALOG_PIN);
         int d4 = analogRead(SERVO4_ANALOG_PIN);
         int d5 = analogRead(SERVO5_ANALOG_PIN);
+
+        Serial.print("d1 = ");
+        Serial.println(d1);
+
         // then map the analog input to a radian value.
         // Todo: MAPPING MUST BE DONE. each servo has different potentiometer.
-        servoFeedback_[0] = map(d1, 0, 940, -1.57, 1.57);
-        servoFeedback_[0] = map(d2, 0, 940, -1.57, 1.57);
-        servoFeedback_[0] = map(d3, 0, 940, -1.57, 1.57);
-        servoFeedback_[0] = map(d4, 0, 940, -1.57, 1.57);
-        servoFeedback_[0] = map(d5, 0, 940, -1.57, 1.57);
+        servoFeedback_[0] = my_map(d1, 236, 402, -1.57, 1.57);
+        servoFeedback_[1] = my_map(d2, 236, 402, -1.57, 1.57);
+        servoFeedback_[2] = my_map(d3, 236, 402, -1.57, 1.57);
+        servoFeedback_[3] = my_map(d4, 236, 402, -1.57, 1.57);
+        servoFeedback_[4] = my_map(d5, 236, 402, -1.57, 1.57);
+
+        Serial.print("f1 = ");
+        Serial.println(servoFeedback_[0]);
 
         // New State                
         float stateNew[18];
@@ -275,6 +282,10 @@ namespace Cyberwing
         memcpy(state_,stateNew,sizeof(state_));	
 	}
 
+
+    float Wing::my_map(int x, float in_min, float in_max, float out_min, float out_max) {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
 
 
     void Wing::publishState(void) {

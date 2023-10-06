@@ -83,6 +83,8 @@ namespace Cyberwing
 		void forwardInputs(void);
 		void updateState(void);
 
+		float my_map(int x, float in_min, float in_max, float out_min, float out_max);
+
 	};
 }
 
